@@ -15,7 +15,6 @@ import java.io.Serializable;
 @AllArgsConstructor
 @ApiModel(description = "员工登录返回的数据格式")
 public class EmployeeLoginVO implements Serializable {
-
     @ApiModelProperty("主键值")
     private Long id;
 
@@ -27,5 +26,4 @@ public class EmployeeLoginVO implements Serializable {
 
     @ApiModelProperty("jwt令牌")
     private String token;
-
 }

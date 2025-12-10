@@ -15,15 +15,18 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BusinessDataVO implements Serializable {
+    // 营业额
+    private Double turnover;
 
-    private Double turnover;//营业额
+    // 有效订单数
+    private Integer validOrderCount;
 
-    private Integer validOrderCount;//有效订单数
+    // 订单完成率
+    private Double orderCompletionRate;
 
-    private Double orderCompletionRate;//订单完成率
+    // 平均客单价
+    private Double unitPrice;
 
-    private Double unitPrice;//平均客单价
-
-    private Integer newUsers;//新增用户数
-
+    // 新增用户数
+    private Integer newUsers;
 }

@@ -25,7 +25,6 @@ import java.util.Map;
 @RequestMapping("/admin/employee")
 @Slf4j
 public class EmployeeController {
-
     @Autowired
     private EmployeeService employeeService;
     @Autowired
@@ -43,7 +42,7 @@ public class EmployeeController {
 
         Employee employee = employeeService.login(employeeLoginDTO);
 
-        //登录成功后，生成jwt令牌
+        // 登录成功后，生成jwt令牌
         Map<String, Object> claims = new HashMap<>();
         claims.put(JwtClaimsConstant.EMP_ID, employee.getId());
         String token = JwtUtil.createJWT(
@@ -70,5 +69,4 @@ public class EmployeeController {
     public Result<String> logout() {
         return Result.success();
     }
-
 }

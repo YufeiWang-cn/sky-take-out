@@ -21,7 +21,6 @@ import springfox.documentation.spring.web.plugins.Docket;
 @Configuration
 @Slf4j
 public class WebMvcConfiguration extends WebMvcConfigurationSupport {
-
     @Autowired
     private JwtTokenAdminInterceptor jwtTokenAdminInterceptor;
 

@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 
 @Data
 public class OrdersPageQueryDTO implements Serializable {
-
     private int page;
 
     private int pageSize;
@@ -26,5 +25,4 @@ public class OrdersPageQueryDTO implements Serializable {
     private LocalDateTime endTime;
 
     private Long userId;
-
 }
