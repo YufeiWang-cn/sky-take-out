@@ -70,6 +70,6 @@ if (!arg2SpringSecurity.matches(password, employee.getPassword())) {
 
 ## TODO：
 
-（1）后续修改密码时，用户输入明文，但是存入数据库时需要使用Argon2算法加密后存入。
+（1）后续修改密码时，用户输入明文，但是存入数据库时需要使用Argon2算法加密。
 
 （2）创建新用户时同理。
