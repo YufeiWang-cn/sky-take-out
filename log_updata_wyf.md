@@ -52,7 +52,7 @@ if (!password.equals(employee.getPassword())) {
 }
 ```
 
-​	**注意：**数据库中已经保存的密码需要手动修改为Argon2算法加密后的密文，否则无法正常登录（可以去网站生成或者使用代码运行生成一次，Argon2算法每次生成的密文不同，选择任意一个即可）。同时数据库中password的长度也需要修改，改成VARCHAR(128)即可。
+​	**注意**：数据库中已经保存的密码需要手动修改为Argon2算法加密后的密文，否则无法正常登录（可以去网站生成或者使用代码运行生成一次，Argon2算法每次生成的密文不同，选择任意一个即可）。同时数据库中password的长度也需要修改，改成VARCHAR(128)即可。
 
 ​	例：$argon2id$v=19$m=60000,t=10,p=1$Jnl+kxDS8CV+OeroeV4Cdg$DkIuTSaaQkKB0rGL2GBbF3Gp/AnGruT31PbQM2P/8p4
 
