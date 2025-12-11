@@ -1,4 +1,4 @@
-# 1.完善登录功能
+# 1.完善"登录"功能
 
 ## 1.1 存在问题
 
@@ -16,7 +16,7 @@
 
 **（1）添加Maven依赖**
 
-​	sky-back-end/pom.xml
+​	*sky-back-end/pom.xml*
 
 ```xml
 <dependency>
@@ -31,7 +31,7 @@
 </dependency>
 ```
 
-​	sky-back-end\sky-server\pom.xml
+​	*sky-back-end\sky-server\pom.xml*
 
 ```xml
 <dependency>
@@ -46,7 +46,7 @@
 
 **（2）修改后端登录验证的代码**
 
-​	sky-back-end\sky-server\src\main\java\com\sky\service\impl\EmployeeServiceImpl.java
+​	*sky-back-end\sky-server\src\main\java\com\sky\service\impl\EmployeeServiceImpl.java*
 
 ```java
 // 原有代码验证部分
@@ -77,3 +77,91 @@ if (!arg2SpringSecurity.matches(password, employee.getPassword())) {
 （1）后续修改密码时，用户输入明文，但是存入数据库时需要使用Argon2算法加密。
 
 （2）创建新用户时同理。
+
+# 2.添加并完善"新增员工"功能
+
+​	密码默认为“123456”，存入数据库前先进行Argon2算法加密。
+
+## 2.1 存在问题
+
+（1）录入的用户名若已经存在，抛出异常后没有处理（用户名应该是唯一的）。
+
+（2）新增员工时，创建人和修改人id设置为了固定值10L。
+
+## 2.2 解决方案
+
+​	**问题1**——设置全局异常处理器。
+
+​	**问题2**——员工登录成功后会生成JWT令牌并响应给前端，后续请求中，前端会携带JWT令牌，通过JWT令牌可以解析出当前登录员工id。但是如何从controller中将当前登录员工id传入service中仍是一个问题，需要使用ThreadLocal（ThreadLocal并不是一个Thread，而是Thread的局部变量，它为每个线程提供单独一份存储空间，具有线程隔离的效果，只有在线程内才能获取到对应的值，线程外侧不能访问）。客户端发起的每一次请求对应单独的一个线程，所以可以使用ThreadLocal解决。
+
+## 2.3 实现步骤
+
+​	**问题1**
+
+​	添加一个全局异常处理器。
+
+​	*sky-back-end\sky-server\src\main\java\com\sky\handler\GlobalExceptionHandler.java*
+
+```java
+/**
+ * 处理SQL异常
+ * @param ex
+ * @return
+ */
+@ExceptionHandler
+public Result exceptionHandler(SQLIntegrityConstraintViolationException ex) {
+    String message = ex.getMessage();
+    if(message.contains("Duplicate entry")) {
+        String[] split = message.split(" ");
+        String username = split[2];
+        String msg = username + MessageConstant.ALREADY_EXISTS;
+        return Result.error(msg);
+    }
+    else return Result.error(MessageConstant.UNKNOWN_ERROR);
+}
+```
+
+​	**问题2**
+
+**（1）封装ThreadLocal**
+
+​	*sky-back-end\sky-common\src\main\java\com\sky\context\BaseContext.java*
+
+```java
+package com.sky.context;
+
+public class BaseContext {
+    public static ThreadLocal<Long> threadLocal = new ThreadLocal<>();
+
+    public static void setCurrentId(Long id) {
+        threadLocal.set(id);
+    }
+
+    public static Long getCurrentId() {
+        return threadLocal.get();
+    }
+
+    public static void removeCurrentId() {
+        threadLocal.remove();
+    }
+}
+```
+
+**（2）在controller中解析并存储当前登录员工id**
+
+​	*sky-back-end\sky-server\src\main\java\com\sky\interceptor\JwtTokenAdminInterceptor.java*
+
+```java
+BaseContext.setCurrentId(empId);
+```
+
+**（3）在service中取出id并设置**
+
+​	*sky-back-end\sky-server\src\main\java\com\sky\service\impl\EmployeeServiceImpl.java*
+
+```java
+// 设置当前记录创建人id和修改人id
+employee.setCreateUser(BaseContext.getCurrentId());
+employee.setUpdateUser(BaseContext.getCurrentId());
+```
+
