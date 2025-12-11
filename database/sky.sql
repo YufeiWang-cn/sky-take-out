@@ -127,7 +127,7 @@ CREATE TABLE `employee` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
   `name` varchar(32) COLLATE utf8_bin NOT NULL COMMENT '姓名',
   `username` varchar(32) COLLATE utf8_bin NOT NULL COMMENT '用户名',
-  `password` varchar(64) COLLATE utf8_bin NOT NULL COMMENT '密码',
+  `password` varchar(128) COLLATE utf8_bin NOT NULL COMMENT '密码',
   `phone` varchar(11) COLLATE utf8_bin NOT NULL COMMENT '手机号',
   `sex` varchar(2) COLLATE utf8_bin NOT NULL COMMENT '性别',
   `id_number` varchar(18) COLLATE utf8_bin NOT NULL COMMENT '身份证号',
