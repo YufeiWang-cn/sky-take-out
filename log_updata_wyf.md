@@ -90,9 +90,9 @@ if (!arg2SpringSecurity.matches(password, employee.getPassword())) {
 
 ## 2.2 解决方案
 
-​	**问题1**——设置全局异常处理器。
+​	**问题1**：设置全局异常处理器。
 
-​	**问题2**——员工登录成功后会生成JWT令牌并响应给前端，后续请求中，前端会携带JWT令牌，通过JWT令牌可以解析出当前登录员工id。但是如何从controller中将当前登录员工id传入service中仍是一个问题，需要使用ThreadLocal（ThreadLocal并不是一个Thread，而是Thread的局部变量，它为每个线程提供单独一份存储空间，具有线程隔离的效果，只有在线程内才能获取到对应的值，线程外侧不能访问）。客户端发起的每一次请求对应单独的一个线程，所以可以使用ThreadLocal解决。
+​	**问题2**：员工登录成功后会生成JWT令牌并响应给前端，后续请求中，前端会携带JWT令牌，通过JWT令牌可以解析出当前登录员工id。但是如何从controller中将当前登录员工id传入service中仍是一个问题，需要使用ThreadLocal（ThreadLocal并不是一个Thread，而是Thread的局部变量，它为每个线程提供单独一份存储空间，具有线程隔离的效果，只有在线程内才能获取到对应的值，线程外侧不能访问）。客户端发起的每一次请求对应单独的一个线程，所以可以使用ThreadLocal解决。
 
 ## 2.3 实现步骤
 
@@ -165,3 +165,105 @@ employee.setCreateUser(BaseContext.getCurrentId());
 employee.setUpdateUser(BaseContext.getCurrentId());
 ```
 
+# 3.添加并完善“员工分页查询”功能
+
+## 3.1 存在问题
+
+​	返回的时间格式错误。
+
+```json
+……
+"createTime": [
+  2025,
+  12,
+  11,
+  21,
+  33,
+  43
+],
+"updateTime": [
+  2025,
+  12,
+  11,
+  21,
+  33,
+  43
+],
+……
+```
+
+## 3.2 解决方案
+
+​	**方案1**：在属性上加入注解，对日期进行格式化。
+
+​	**方案2**：在WebMvcConfiguration中拓展Spring MVC的消息转换器，同一对日期类型进行格式化处理。
+
+​	**对比 ：**方案1对于每个新属性都要添加，而方案2可以对日期类型统一进行格式化处理。
+
+## 3.3 实现步骤
+
+​	**方案1**
+
+```java
+@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+```
+
+​	**方案2**
+
+（1）自定义对象映射器
+
+​	*sky-back-end\sky-common\src\main\java\com\sky\json\JacksonObjectMapper.java*
+
+```java
+/**
+ * 对象映射器:基于jackson将Java对象转为json，或者将json转为Java对象
+ * 将JSON解析为Java对象的过程称为 [从JSON反序列化Java对象]
+ * 从Java对象生成JSON的过程称为 [序列化Java对象到JSON]
+ */
+public class JacksonObjectMapper extends ObjectMapper {
+    public static final String DEFAULT_DATE_FORMAT = "yyyy-MM-dd";
+    // public static final String DEFAULT_DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
+    public static final String DEFAULT_DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm";
+    public static final String DEFAULT_TIME_FORMAT = "HH:mm:ss";
+
+    public JacksonObjectMapper() {
+        super();
+        // 收到未知属性时不报异常
+        this.configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+        //反序列化时，属性不存在的兼容处理
+        this.getDeserializationConfig().withoutFeatures(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+
+        SimpleModule simpleModule = new SimpleModule()
+                .addDeserializer(LocalDateTime.class, new LocalDateTimeDeserializer(DateTimeFormatter.ofPattern(DEFAULT_DATE_TIME_FORMAT)))
+                .addDeserializer(LocalDate.class, new LocalDateDeserializer(DateTimeFormatter.ofPattern(DEFAULT_DATE_FORMAT)))
+                .addDeserializer(LocalTime.class, new LocalTimeDeserializer(DateTimeFormatter.ofPattern(DEFAULT_TIME_FORMAT)))
+                .addSerializer(LocalDateTime.class, new LocalDateTimeSerializer(DateTimeFormatter.ofPattern(DEFAULT_DATE_TIME_FORMAT)))
+                .addSerializer(LocalDate.class, new LocalDateSerializer(DateTimeFormatter.ofPattern(DEFAULT_DATE_FORMAT)))
+                .addSerializer(LocalTime.class, new LocalTimeSerializer(DateTimeFormatter.ofPattern(DEFAULT_TIME_FORMAT)));
+
+        // 注册功能模块 例如，可以添加自定义序列化器和反序列化器
+        this.registerModule(simpleModule);
+    }
+}
+```
+
+（2）拓展消息转换器
+
+```java
+/**
+ * 拓展Spring MVC框架的消息转换器
+ * @param converters
+ */
+@Override
+protected void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
+    log.info("拓展消息转换器");
+    // 创建一个消息转换器对象
+    MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
+    // 需要为消息转换器设置一个对象转换器，对象转换器可以将Java对象序列化为json数据
+    converter.setObjectMapper(new JacksonObjectMapper());
+    // 将这个消息转换器加入到容器中
+    // 0表示顺序，将这个消息转换器优先使用
+    converters.add(0, converter);
+}
+```
