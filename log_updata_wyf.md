@@ -274,3 +274,4 @@ protected void extendMessageConverters(List<HttpMessageConverter<?>> converters)
 
 # 5.添加“编辑员工”功能
 
+​	首先根据id查询当前要修改的员工信息（注意查询的时候要屏蔽密码），然后编辑员工信息并存入数据库。
