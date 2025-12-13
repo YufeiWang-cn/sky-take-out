@@ -198,7 +198,7 @@ employee.setUpdateUser(BaseContext.getCurrentId());
 
 ​	**方案2**：在WebMvcConfiguration中拓展Spring MVC的消息转换器，同一对日期类型进行格式化处理。
 
-​	**对比 ：**方案1对于每个新属性都要添加，而方案2可以对日期类型统一进行格式化处理。
+​	**对比** ：每添加一个新属性都要重新应用方案1，而方案2可以对日期类型统一进行格式化处理。
 
 ## 3.3 实现步骤
 
@@ -267,3 +267,10 @@ protected void extendMessageConverters(List<HttpMessageConverter<?>> converters)
     converters.add(0, converter);
 }
 ```
+
+# 4.添加“修改员工账号状态”功能
+
+​	员工账号分为“启用”和“禁用”两个状态，状态为“禁用”的员工账号不能登录系统。
+
+# 5.添加“编辑员工”功能
+
