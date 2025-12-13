@@ -275,3 +275,7 @@ protected void extendMessageConverters(List<HttpMessageConverter<?>> converters)
 # 5.添加“编辑员工”功能
 
 ​	首先根据id查询当前要修改的员工信息（注意查询的时候要屏蔽密码），然后编辑员工信息并存入数据库。
+
+# 6.添加”分类分页查询“功能
+
+​	分类名称必须是唯一的，分类按照类型可以分为菜品分类和套餐分类。
