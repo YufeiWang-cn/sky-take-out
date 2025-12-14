@@ -278,6 +278,35 @@ protected void extendMessageConverters(List<HttpMessageConverter<?>> converters)
 
 # 6.实现”分类管理“模块
 
-​	添加“分类分页查询”、“新增分类”功能。
+​	添加“分类分页查询”、“新增分类”、“根据id删除分类”功能。
 
 ​	分类名称必须是唯一的，分类按照类型可以分为菜品分类和套餐分类，新添加的分类状态默认为”禁用“，排序字段越大显示优先级越高。
+
+​	根据id删除分类的时候需要注意当前分类下是否有关联的菜品或者套餐，需要先到对应的表里查询再确定是否删除，如果有关联的菜品或套餐，则抛出异常，不执行删除操作，如果没有关联的菜品或套餐，则可以正常执行删除操作。
+
+​	*sky-back-end\sky-server\src\main\java\com\sky\service\impl\CategoryServiceImpl.java*
+
+```java
+/**
+ * 根据id删除分类
+ * @param id
+ */
+@Override
+public void deleteById(Long id) {
+    // 查询当前菜品分类是否关联了菜品，如果关联了就抛出业务异常
+    Integer count = dishMapper.countByCategoryId(id);
+    if(count > 0){
+        // 当前茶品分类下有菜品，不能删除
+        throw new DeletionNotAllowedException(MessageConstant.CATEGORY_BE_RELATED_BY_DISH);
+    }
+
+    // 查询当前套餐分类是否关联了套餐，如果关联了就抛出业务异常
+    count = setmealMapper.countByCategoryId(id);
+    if(count > 0){
+        // 当前套餐分类下有套餐，不能删除
+        throw new DeletionNotAllowedException(MessageConstant.CATEGORY_BE_RELATED_BY_SETMEAL);
+    }
+    categoryMapper.deleteById(id);
+}
+```
+
