@@ -278,9 +278,11 @@ protected void extendMessageConverters(List<HttpMessageConverter<?>> converters)
 
 # 6.实现”分类管理“模块
 
-​	添加“分类分页查询”、“新增分类”、“根据id删除分类”、”修改分类状态“功能。
+​	添加“分类分页查询”、“新增分类”、“根据id删除分类”、”修改分类状态“、“修改分类”功能。
 
-​	分类名称必须是唯一的，分类按照类型可以分为菜品分类和套餐分类，新添加的分类状态默认为”禁用“，排序字段越大显示优先级越高。
+​	分类名称必须是唯一的，分类按照类型可以分为菜品分类和套餐分类，新添加的分类状态默认为”禁用“，排序字段数值越大优先级越高。
+
+## 6.1 “根据id删除分类”功能
 
 ​	根据id删除分类的时候需要注意当前分类下是否有关联的菜品或者套餐，需要先到对应的表里查询再确定是否删除，如果有关联的菜品或套餐，则抛出异常，不执行删除操作，如果没有关联的菜品或套餐，则可以正常执行删除操作。
 
@@ -310,3 +312,33 @@ public void deleteById(Long id) {
 }
 ```
 
+## 6.2 “修改分类”功能
+
+​	测试时发现，即使未修改分类的信息也会操作成功，会导致其他信息未变的情况下修改操作时间。解决这个问题需要添加自定义的异常类，并在service中加入一个判断条件，如果信息未修改则抛出异常。
+
+​	*sky-back-end\sky-server\src\main\java\com\sky\service\impl\CategoryServiceImpl.java*
+
+```Java
+/**
+ * 修改分类
+ * @param categoryDTO
+ */
+@Override
+public void update(CategoryDTO categoryDTO) {
+    // 根据id去数据库查询分类
+    Category category_select = categoryMapper.getById(categoryDTO.getId());
+    // 比较修改后的name和sort是否相同，如果相同抛出异常
+    if(Objects.equals(categoryDTO.getName(), category_select.getName()) && Objects.equals(categoryDTO.getSort(), category_select.getSort())) {
+        throw new InformationNotModified(MessageConstant.INFORMATION_NOT_MODIFIED);
+    }
+
+    Category category = new Category();
+    BeanUtils.copyProperties(categoryDTO, category);
+
+    // 设置修改时间、修改人id
+    category.setUpdateTime(LocalDateTime.now());
+    category.setUpdateUser(BaseContext.getCurrentId());
+
+    categoryMapper.update(category);
+}
+```

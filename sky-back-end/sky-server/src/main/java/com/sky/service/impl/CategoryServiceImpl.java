@@ -10,6 +10,7 @@ import com.sky.dto.CategoryPageQueryDTO;
 import com.sky.entity.Category;
 import com.sky.entity.Employee;
 import com.sky.exception.DeletionNotAllowedException;
+import com.sky.exception.InformationNotModified;
 import com.sky.mapper.CategoryMapper;
 import com.sky.mapper.DishMapper;
 import com.sky.mapper.SetmealMapper;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class CategoryServiceImpl implements CategoryService {
@@ -106,5 +108,37 @@ public class CategoryServiceImpl implements CategoryService {
                 .updateUser(BaseContext.getCurrentId())
                 .build();
         categoryMapper.update(category);
+    }
+
+    /**
+     * 修改分类
+     * @param categoryDTO
+     */
+    @Override
+    public void update(CategoryDTO categoryDTO) {
+        // 根据id去数据库查询分类
+        Category category_select = categoryMapper.getById(categoryDTO.getId());
+        // 比较修改后的name和sort是否相同，如果相同抛出异常
+        if(Objects.equals(categoryDTO.getName(), category_select.getName()) && Objects.equals(categoryDTO.getSort(), category_select.getSort())) {
+            throw new InformationNotModified(MessageConstant.INFORMATION_NOT_MODIFIED);
+        }
+
+        Category category = new Category();
+        BeanUtils.copyProperties(categoryDTO, category);
+
+        // 设置修改时间、修改人id
+        category.setUpdateTime(LocalDateTime.now());
+        category.setUpdateUser(BaseContext.getCurrentId());
+
+        categoryMapper.update(category);
+    }
+
+    /**
+     * 根据类型查询
+     * @param type
+     * @return
+     */
+    public List<Category> list(Integer type) {
+        return categoryMapper.list(type);
     }
 }
