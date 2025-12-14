@@ -278,6 +278,6 @@ protected void extendMessageConverters(List<HttpMessageConverter<?>> converters)
 
 # 6.实现”分类管理“模块
 
-​	实现“分类分页查询”、“新增分类”功能。
+​	添加“分类分页查询”、“新增分类”功能。
 
 ​	分类名称必须是唯一的，分类按照类型可以分为菜品分类和套餐分类，新添加的分类状态默认为”禁用“，排序字段越大显示优先级越高。
