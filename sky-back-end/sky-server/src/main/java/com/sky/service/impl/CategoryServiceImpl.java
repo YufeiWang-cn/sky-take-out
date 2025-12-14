@@ -91,4 +91,20 @@ public class CategoryServiceImpl implements CategoryService {
         }
         categoryMapper.deleteById(id);
     }
+
+    /**
+     * 修改分类状态
+     * @param status
+     * @param id
+     */
+    @Override
+    public void startOrStop(Integer status, Long id) {
+        Category category = Category.builder()
+                .id(id)
+                .status(status)
+                .updateTime(LocalDateTime.now())
+                .updateUser(BaseContext.getCurrentId())
+                .build();
+        categoryMapper.update(category);
+    }
 }

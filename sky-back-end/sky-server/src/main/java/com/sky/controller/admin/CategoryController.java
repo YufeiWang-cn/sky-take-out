@@ -60,4 +60,17 @@ public class CategoryController {
         categoryService.deleteById(id);
         return Result.success();
     }
+
+    /**
+     * 修改分类状态
+     * @param status
+     * @param id
+     * @return
+     */
+    @PostMapping("status/{status}")
+    @ApiOperation("修改分类状态")
+    public Result startOrStop(@PathVariable Integer status, Long id) {
+        categoryService.startOrStop(status, id);
+        return Result.success();
+    }
 }
