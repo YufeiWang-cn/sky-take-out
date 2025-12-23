@@ -342,3 +342,102 @@ public void update(CategoryDTO categoryDTO) {
     categoryMapper.update(category);
 }
 ```
+
+# 7.公共字段自动填充
+
+## 7.1 存在问题
+
+​	”创建时间“、”创建人id“、”修改时间“、”修改人id“等字段几乎所有insert操作和update操作都要使用，每个类中都要写相应的代码，代码冗余且不易维护。
+
+## 7.2 解决方案
+
+​	自定义注解标识需要进行公共字段自动填充的方法，自定义切面类，统一拦截并通过反射为公共字段赋值。
+
+## 7.3 实现步骤
+
+（1）自定义注解AutoFill，用于标识需要进行公共字段自动填充的方法
+
+​	*sky-back-end\sky-server\src\main\java\com\sky\annotation\AutoFill.java*
+
+```java
+/**
+ * 自定义注解，用于标识某个方法需要进行公共字段自动填充处理
+ */
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface AutoFill {
+    // 数据库操作类型：UPDATE INSERT
+    OperationType value();  // 枚举类
+}
+```
+
+（2）自定义切面类AutoFillAspect，统一拦截加入AutoFill注解的方法，通过反射为公共字段赋值
+
+​	*sky-back-end\sky-server\src\main\java\com\sky\aspect\AutoFillAspect.java*
+
+```java
+/**
+ * 自定义切面，实现公共字段自动填充处理逻辑
+ */
+@Aspect
+@Component
+@Slf4j
+public class AutoFillAspect {
+    /**
+     * 切入点
+     */
+    @Pointcut("execution(* com.sky.mapper.*.*(..)) && @annotation(com.sky.annotation.AutoFill)")
+    public void autoFillPointcut() { }
+
+    @Before("autoFillPointcut()")
+    public void autoFill(JoinPoint joinPoint) {
+        log.info("开始进行公共字段自动填充...");
+
+        // 获取当前被拦截方法上的数据库操作类型
+        MethodSignature signature = (MethodSignature) joinPoint.getSignature();  // 方法签名对象
+        AutoFill autoFill = signature.getMethod().getAnnotation(AutoFill.class);  // 获得方法上的注解对象
+        OperationType operationType = autoFill.value();  // 获得数据库操作类型
+
+        // 获取当前被拦截方法的参数——实体对象
+        Object[] args = joinPoint.getArgs();
+        if(args == null || args.length == 0) {
+            return;
+        }
+        Object entity = args[0];  // 约定AutoFill注解的方法第一个参数都为实体
+
+        // 准备赋值的数据
+        LocalDateTime now = LocalDateTime.now();
+        Long currentId = BaseContext.getCurrentId();
+
+        // 根据当前不同的操作类型，通过反射为对应的属性赋值
+        if(operationType == OperationType.INSERT) {
+            try {
+                Method setCreateTime = entity.getClass().getDeclaredMethod(AutoFillConstant.SET_CREATE_TIME, LocalDateTime.class);
+                Method setCreateUser = entity.getClass().getDeclaredMethod(AutoFillConstant.SET_CREATE_USER, Long.class);
+
+                // 通过反射为对象属性赋值
+                setCreateTime.invoke(entity, now);
+                setCreateUser.invoke(entity, currentId);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        // 无论是INSERT还是UPDATE都要更新updateTime和updateUser
+        try {
+            Method setUpdateTime = entity.getClass().getDeclaredMethod(AutoFillConstant.SET_UPDATE_TIME, LocalDateTime.class);
+            Method setUpdateUser = entity.getClass().getDeclaredMethod(AutoFillConstant.SET_UPDATE_USER, Long.class);
+
+            setUpdateTime.invoke(entity, now);
+            setUpdateUser.invoke(entity, currentId);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+（3）在Mapper方法上加入AutoFill注解
+
+## 7.4 TODO
+
+​	代码目前可读性较差，并且较繁琐，是否有优化空间？

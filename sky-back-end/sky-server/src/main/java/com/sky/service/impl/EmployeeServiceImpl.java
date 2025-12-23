@@ -12,6 +12,7 @@ import com.sky.dto.EmployeePageQueryDTO;
 import com.sky.entity.Employee;
 import com.sky.exception.AccountLockedException;
 import com.sky.exception.AccountNotFoundException;
+import com.sky.exception.InformationNotModified;
 import com.sky.exception.PasswordErrorException;
 import com.sky.mapper.EmployeeMapper;
 import com.sky.result.PageResult;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class EmployeeServiceImpl implements EmployeeService {
@@ -88,13 +90,13 @@ public class EmployeeServiceImpl implements EmployeeService {
         // 设置账号的状态，默认正常状态
         employee.setStatus(StatusConstant.ENABLE);
 
-        // 设置当前记录的创建时间和修改时间
-        employee.setCreateTime(LocalDateTime.now());
-        employee.setUpdateTime(LocalDateTime.now());
-
-        // 设置当前记录创建人id和修改人id
-        employee.setCreateUser(BaseContext.getCurrentId());
-        employee.setUpdateUser(BaseContext.getCurrentId());
+//        // 设置当前记录的创建时间和修改时间
+//        employee.setCreateTime(LocalDateTime.now());
+//        employee.setUpdateTime(LocalDateTime.now());
+//
+//        // 设置当前记录创建人id和修改人id
+//        employee.setCreateUser(BaseContext.getCurrentId());
+//        employee.setUpdateUser(BaseContext.getCurrentId());
 
         // 持久层插入数据
         employeeMapper.insert(employee);
@@ -130,8 +132,10 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         // 利用builder注解
         Employee employee = Employee.builder()
-                .status(status)
                 .id(id)
+                .status(status)
+//                .updateTime(LocalDateTime.now())
+//                .updateUser(BaseContext.getCurrentId())
                 .build();
         employeeMapper.update(employee);
     }
@@ -154,10 +158,20 @@ public class EmployeeServiceImpl implements EmployeeService {
      */
     @Override
     public void update(EmployeeDTO employeeDTO) {
-        Employee employee = new Employee();
+        // 根据id去数据库查询员工
+        Employee employee = employeeMapper.getById(employeeDTO.getId());
+        // 比较username、name、phone、sex、IdNumber是否修改，如果未修改则抛出异常
+        if(Objects.equals(employeeDTO.getUsername(), employee.getUsername())
+                && Objects.equals(employeeDTO.getName(), employee.getName())
+                && Objects.equals(employeeDTO.getPhone(), employee.getPhone())
+                && Objects.equals(employeeDTO.getSex(), employee.getSex())
+                && Objects.equals(employeeDTO.getIdNumber(), employee.getIdNumber())) {
+            throw new InformationNotModified(MessageConstant.INFORMATION_NOT_MODIFIED);
+        }
+
         BeanUtils.copyProperties(employeeDTO, employee);
-        employee.setUpdateTime(LocalDateTime.now());
-        employee.setUpdateUser(BaseContext.getCurrentId());
+//        employee.setUpdateTime(LocalDateTime.now());
+//        employee.setUpdateUser(BaseContext.getCurrentId());
         employeeMapper.update(employee);
     }
 }
