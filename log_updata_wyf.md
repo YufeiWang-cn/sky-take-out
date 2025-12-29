@@ -670,7 +670,7 @@ public void saveWithFlavor(DishDTO dishDTO) {
 
 ​	可以一次删除一个菜品，也可以批量删除菜品；起售中的菜品不能删除；被套餐关联的菜品不能删除；删除菜品后，关联的口味数据也需要删除掉。
 
-![](D:\wyf\Competitions-and-research-projects\heima\sky\image_wyf\删除菜品的数据库关系.png)
+![](https://sky-wyf.oss-cn-beijing.aliyuncs.com/image_wyf/%E5%88%A0%E9%99%A4%E8%8F%9C%E5%93%81%E7%9A%84%E6%95%B0%E6%8D%AE%E5%BA%93%E5%85%B3%E7%B3%BB.png)
 
 ## 8.5 ”根据id查询菜品“功能
 
