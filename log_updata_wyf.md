@@ -441,3 +441,244 @@ public class AutoFillAspect {
 ## 7.4 TODO
 
 ​	代码目前可读性较差，并且较繁琐，是否有优化空间？
+
+# 8. 添加并完善“菜品管理”功能
+
+## 8.1 “文件上传”功能
+
+​	文件上传需要借助阿里云OSS，实现将文件上传至云端。
+
+（1）创建阿里云账号，申请相应OSS资源，创建bucket
+
+（2）在yml中配置相关信息
+
+​	*sky-back-end\sky-server\src\main\resources\application.yml*
+
+```yaml
+sky:
+  alioss:
+    endpoint: ${sky.alioss.endpoint}
+    access-key-id: ${sky.alioss.access-key-id}
+    access-key-secret: ${sky.alioss.access-key-secret}
+    bucket-name: ${sky.alioss.bucket-name}
+```
+
+​	*sky-back-end\sky-server\src\main\resources\application-dev.yml*
+
+```yaml
+sky:
+  alioss:
+    endpoint: your_endpoint
+    access-key-id: your_access-key-id
+    access-key-secret: your_access-key-secret
+    bucket-name: your_bucket-name
+```
+
+（3）将配置文件（application.yml）中的属性绑定到 Java 对象上
+
+​	*sky-back-end\sky-common\src\main\java\com\sky\properties\AliOssProperties.java*
+
+```java
+@Component
+@ConfigurationProperties(prefix = "sky.alioss")
+@Data
+public class AliOssProperties {
+    private String endpoint;
+    private String accessKeyId;
+    private String accessKeySecret;
+    private String bucketName;
+}
+```
+
+（4）将与阿里云OSS建立连接和上传文件的操作封装成工具类
+
+​	*sky-back-end\sky-common\src\main\java\com\sky\utils\AliOssUtil.java*
+
+```java
+@Data
+@AllArgsConstructor
+@Slf4j
+public class AliOssUtil {
+    private String endpoint;
+    private String accessKeyId;
+    private String accessKeySecret;
+    private String bucketName;
+
+    /**
+     * 文件上传
+     *
+     * @param bytes
+     * @param objectName
+     * @return
+     */
+    public String upload(byte[] bytes, String objectName) {
+        // 创建OSSClient实例。
+        OSS ossClient = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret);
+
+        try {
+            // 创建PutObject请求。
+            ossClient.putObject(bucketName, objectName, new ByteArrayInputStream(bytes));
+        } catch (OSSException oe) {
+            System.out.println("Caught an OSSException, which means your request made it to OSS, "
+                    + "but was rejected with an error response for some reason.");
+            System.out.println("Error Message:" + oe.getErrorMessage());
+            System.out.println("Error Code:" + oe.getErrorCode());
+            System.out.println("Request ID:" + oe.getRequestId());
+            System.out.println("Host ID:" + oe.getHostId());
+        } catch (ClientException ce) {
+            System.out.println("Caught an ClientException, which means the client encountered "
+                    + "a serious internal problem while trying to communicate with OSS, "
+                    + "such as not being able to access the network.");
+            System.out.println("Error Message:" + ce.getMessage());
+        } finally {
+            if (ossClient != null) {
+                ossClient.shutdown();
+            }
+        }
+
+        // 文件访问路径规则 https://BucketName.Endpoint/ObjectName
+        StringBuilder stringBuilder = new StringBuilder("https://");
+        stringBuilder
+                .append(bucketName)
+                .append(".")
+                .append(endpoint)
+                .append("/")
+                .append(objectName);
+
+        log.info("文件上传到:{}", stringBuilder.toString());
+
+        return stringBuilder.toString();
+    }
+}
+```
+
+（5）创建配置类，用于创建阿里云文件上传工具类对象
+
+​	*sky-back-end\sky-server\src\main\java\com\sky\config\OssConfiguration.java*
+
+```java
+/**
+ * 配置类，用于创建AliOssUtil对象
+ */
+@Configuration
+@Slf4j
+public class OssConfiguration {
+    @Bean
+    @ConditionalOnMissingBean
+    public AliOssUtil aliOssUtil(AliOssProperties aliOssProperties) {
+        log.info("开始创建阿里云文件上传工具类对象：{}", aliOssProperties);
+         return new AliOssUtil(aliOssProperties.getEndpoint(),
+                aliOssProperties.getAccessKeyId(),
+                aliOssProperties.getAccessKeySecret(),
+                aliOssProperties.getBucketName());
+    }
+}
+```
+
+（6）创建Controller
+
+​	*sky-back-end\sky-server\src\main\java\com\sky\controller\admin\CommonController.java*
+
+```java
+/**
+ * 通用接口
+ */
+@RestController
+@RequestMapping("/admin/common")
+@Slf4j
+@Api(tags = "通用接口")
+public class CommonController {
+    @Autowired
+    private AliOssUtil aliOssUtil;
+
+    /**
+     * 文件上传
+     * @param file
+     * @return
+     */
+    @PostMapping("/upload")
+    @ApiOperation("文件上传")
+    public Result<String> upload(MultipartFile file) {
+        log.info("文件上传：{}", file);
+        try {
+            // 原始文件名
+            String originalFilename = file.getOriginalFilename();
+            // 截取原始文件名的后缀
+            String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            // 构造新文件名称
+            String objectName = UUID.randomUUID().toString() + extension;
+            String filePath =  aliOssUtil.upload(file.getBytes(), objectName);
+            return Result.success(filePath);
+        } catch (IOException e) {
+           log.error("文件上传失败：{}", e.getMessage());
+        }
+        return Result.error(MessageConstant.UPLOAD_FAILED);
+    }
+}
+```
+
+## 8.2 “新增菜品”功能
+
+​	在添加口味信息时，需要获取菜品的id，但是由于普通的insert操作无法获取id，所以需要在Mapper.xml中做特殊处理。
+
+​	*sky-back-end\sky-server\src\main\resources\mapper\DishMapper.xml*
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sky.mapper.DishMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into sky_take_out.dish (name, category_id, price, image, description, status, create_time, update_time, create_user, update_user) VALUE
+        (#{name}, #{categoryId}, #{price}, #{image}, #{description}, #{status}, #{createTime}, #{updateTime}, #{createUser}, #{updateUser})
+    </insert>
+</mapper>
+```
+
+​	*sky-back-end\sky-server\src\main\java\com\sky\service\impl\DishServiceImpl.java*
+
+```java
+/**
+ * 新增菜品和对应的口味
+ * @param dishDTO
+ */
+@Override
+@Transactional
+public void saveWithFlavor(DishDTO dishDTO) {
+    // 向菜品表插入1条数据
+    Dish dish = new Dish();
+    BeanUtils.copyProperties(dishDTO, dish);
+    dishMapper.insert(dish);
+
+    // 获取insert语句生成的主键值
+    Long dishId = dish.getId();
+
+    // 向口味表插入n条数据
+    List<DishFlavor> flavors = dishDTO.getFlavors();
+    if(flavors != null && !flavors.isEmpty()) {
+        flavors.forEach(dishFlavor -> {
+            dishFlavor.setDishId(dishId);
+        });
+        dishFlavorMapper.insertBatch(flavors);
+    }
+}
+```
+
+## 8.3 "菜品分页查询"功能
+
+## 8.4 “删除菜品”功能
+
+​	可以一次删除一个菜品，也可以批量删除菜品；起售中的菜品不能删除；被套餐关联的菜品不能删除；删除菜品后，关联的口味数据也需要删除掉。
+
+![](D:\wyf\Competitions-and-research-projects\heima\sky\image_wyf\删除菜品的数据库关系.png)
+
+## 8.5 ”根据id查询菜品“功能
+
+## 8.6 “修改菜品”功能
+
+​	修改菜品暂时未校验是否为有效修改，需要比对的东西过多，之后再考虑有没有更好的方法。
+
+## 8.7 “根据分类查询菜品”功能
+
+## 8.8 “修改菜品状态”功能
+

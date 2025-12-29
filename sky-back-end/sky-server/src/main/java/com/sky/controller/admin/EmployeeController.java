@@ -73,6 +73,7 @@ public class EmployeeController {
     @PostMapping("/logout")
     @ApiOperation("员工退出")
     public Result<String> logout() {
+        log.info("员工退出");
         return Result.success();
     }
 
@@ -92,7 +93,7 @@ public class EmployeeController {
     @GetMapping("/page")
     @ApiOperation("员工分页查询")
     public Result<PageResult> page(EmployeePageQueryDTO employeePageQueryDTO) {
-        log.info("员工分页查询，参数为：{}", employeePageQueryDTO);
+        log.info("员工分页查询：{}", employeePageQueryDTO);
         PageResult pageResult = employeeService.pageQuery(employeePageQueryDTO);
         return Result.success(pageResult);
     }
@@ -119,7 +120,7 @@ public class EmployeeController {
     @GetMapping("/{id}")
     @ApiOperation("根据id查询员工信息")
     public Result<Employee> getById(@PathVariable Long id) {
-        log.info("查询id为{}的员工信息", id);
+        log.info("根据id查询员工信息：{}", id);
         Employee employee = employeeService.getById(id);
         return Result.success(employee);
     }
