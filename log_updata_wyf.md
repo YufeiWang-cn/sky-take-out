@@ -682,3 +682,5 @@ public void saveWithFlavor(DishDTO dishDTO) {
 
 ## 8.8 “修改菜品状态”功能
 
+# 9.添加“营业状态查询”和“营业状态设置”功能
+
