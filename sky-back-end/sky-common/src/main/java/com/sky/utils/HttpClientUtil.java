@@ -32,7 +32,7 @@ public class HttpClientUtil {
      * @param paramMap
      * @return
      */
-    public static String doGet(String url,Map<String,String> paramMap){
+    public static String doGet(String url, Map<String,String> paramMap){
         // 创建Httpclient对象
         CloseableHttpClient httpClient = HttpClients.createDefault();
 
@@ -43,7 +43,7 @@ public class HttpClientUtil {
             URIBuilder builder = new URIBuilder(url);
             if(paramMap != null){
                 for (String key : paramMap.keySet()) {
-                    builder.addParameter(key,paramMap.get(key));
+                    builder.addParameter(key, paramMap.get(key));
                 }
             }
             URI uri = builder.build();

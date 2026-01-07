@@ -1,4 +1,4 @@
-# 1.完善"登录"功能
+# 1.完善"登录"功能（管理端）
 
 ## 1.1 存在问题
 
@@ -78,7 +78,7 @@ if (!arg2SpringSecurity.matches(password, employee.getPassword())) {
 
 （2）创建新用户时同理。
 
-# 2.添加并完善"新增员工"功能
+# 2.添加并完善"新增员工"功能（管理端）
 
 ​	密码默认为“123456”，存入数据库前先进行Argon2算法加密。
 
@@ -165,7 +165,7 @@ employee.setCreateUser(BaseContext.getCurrentId());
 employee.setUpdateUser(BaseContext.getCurrentId());
 ```
 
-# 3.添加并完善“员工分页查询”功能
+# 3.添加并完善“员工分页查询”功能（管理端）
 
 ## 3.1 存在问题
 
@@ -268,15 +268,15 @@ protected void extendMessageConverters(List<HttpMessageConverter<?>> converters)
 }
 ```
 
-# 4.添加“修改员工账号状态”功能
+# 4.添加“修改员工账号状态”功能（管理端）
 
 ​	员工账号分为“启用”和“禁用”两个状态，状态为“禁用”的员工账号不能登录系统。
 
-# 5.添加“编辑员工”功能
+# 5.添加“编辑员工”功能（管理端）
 
 ​	首先根据id查询当前要修改的员工信息（注意查询的时候要屏蔽密码），然后编辑员工信息并存入数据库。
 
-# 6.实现”分类管理“模块
+# 6.实现”分类管理“模块（管理端）
 
 ​	添加“分类分页查询”、“新增分类”、“根据id删除分类”、”修改分类状态“、“修改分类”功能。
 
@@ -343,7 +343,7 @@ public void update(CategoryDTO categoryDTO) {
 }
 ```
 
-# 7.公共字段自动填充
+# 7.公共字段自动填充（管理端）
 
 ## 7.1 存在问题
 
@@ -442,7 +442,7 @@ public class AutoFillAspect {
 
 ​	代码目前可读性较差，并且较繁琐，是否有优化空间？
 
-# 8. 添加并完善“菜品管理”功能
+# 8. 添加并完善“菜品管理”功能（管理端）
 
 ## 8.1 “文件上传”功能
 
@@ -682,5 +682,60 @@ public void saveWithFlavor(DishDTO dishDTO) {
 
 ## 8.8 “修改菜品状态”功能
 
-# 9.添加“营业状态查询”和“营业状态设置”功能
+# 9.添加“营业状态查询”和“营业状态设置”功能（管理端）
 
+# 10.添加“微信登录”功能（用户端）
+
+​	首先需要申请一个微信小程序，写好前端代码，登录时小程序向后端请求，后端再调用微信接口服务，完成登录。（有疑问可以查看微信小程序官方文档）
+
+​	*sky-back-end\sky-server\src\main\java\com\sky\service\impl\UserServiceImpl.java*
+
+```java
+/**
+ * 调用微信接口服务，获取微信用户的openid
+ * @param code
+ * @return
+ */
+private String getOpenid(String code) {
+    Map<String, String> map = new HashMap<>();
+    map.put("appid", weChatProperties.getAppid());
+    map.put("secret", weChatProperties.getSecret());
+    map.put("js_code", code);
+    map.put("grant_type", "authorization_code");
+    String json = HttpClientUtil.doGet(WX_LOGIN_URL, map);
+
+    JSONObject jsonObject = JSONObject.parseObject(json);
+    return jsonObject.getString("openid");
+}
+
+/**
+ * 微信登录
+ * @param userLoginDTO
+ * @return
+ */
+@Override
+public User wxLogin(UserLoginDTO userLoginDTO) {
+    // 调用微信接口服务，获得当前微信用户的openid
+    String openid = getOpenid(userLoginDTO.getCode());
+
+    // 判断openid是否为空，如果为空表示登录失败，抛出业务异常
+    if(openid == null) {
+        throw new LoginFailedException(MessageConstant.LOGIN_FAILED);
+    }
+
+    // 判断当前用户是否为新用户
+    User user = userMapper.getByOpenId(openid);
+
+    // 如果是新用户，自动完成注册
+    if(user == null) {
+        user = User.builder()
+                .openid(openid)
+                .createTime(LocalDateTime.now())
+                .build();
+    }
+    userMapper.insert(user);
+
+    // 返回用户对象
+    return user;
+}
+```
