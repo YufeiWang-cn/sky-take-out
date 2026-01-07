@@ -74,9 +74,9 @@ if (!arg2SpringSecurity.matches(password, employee.getPassword())) {
 
 ## 1.4 TODO
 
-（1）后续修改密码时，用户输入明文，但是存入数据库时需要使用Argon2算法加密。
+**（1）后续修改密码时，用户输入明文，但是存入数据库时需要使用Argon2算法加密**
 
-（2）创建新用户时同理。
+**（2）创建新用户时同理**
 
 # 2.添加并完善"新增员工"功能（管理端）
 
@@ -84,9 +84,9 @@ if (!arg2SpringSecurity.matches(password, employee.getPassword())) {
 
 ## 2.1 存在问题
 
-（1）录入的用户名若已经存在，抛出异常后没有处理（用户名应该是唯一的）。
+**（1）录入的用户名若已经存在，抛出异常后没有处理（用户名应该是唯一的）**
 
-（2）新增员工时，创建人和修改人id设置为了固定值10L。
+**（2）新增员工时，创建人和修改人id设置为了固定值10L**
 
 ## 2.2 解决方案
 
@@ -208,7 +208,7 @@ employee.setUpdateUser(BaseContext.getCurrentId());
 
 ​	**方案2**
 
-（1）自定义对象映射器
+**（1）自定义对象映射器**
 
 ​	*sky-back-end\sky-common\src\main\java\com\sky\json\JacksonObjectMapper.java*
 
@@ -246,7 +246,7 @@ public class JacksonObjectMapper extends ObjectMapper {
 }
 ```
 
-（2）拓展消息转换器
+**（2）拓展消息转换器**
 
 ```java
 /**
@@ -353,7 +353,7 @@ public void update(CategoryDTO categoryDTO) {
 
 ## 7.3 实现步骤
 
-（1）自定义注解AutoFill，用于标识需要进行公共字段自动填充的方法
+**（1）自定义注解AutoFill，用于标识需要进行公共字段自动填充的方法**
 
 ​	*sky-back-end\sky-server\src\main\java\com\sky\annotation\AutoFill.java*
 
@@ -369,7 +369,7 @@ public @interface AutoFill {
 }
 ```
 
-（2）自定义切面类AutoFillAspect，统一拦截加入AutoFill注解的方法，通过反射为公共字段赋值
+**（2）自定义切面类AutoFillAspect，统一拦截加入AutoFill注解的方法，通过反射为公共字段赋值**
 
 ​	*sky-back-end\sky-server\src\main\java\com\sky\aspect\AutoFillAspect.java*
 
@@ -434,7 +434,7 @@ public class AutoFillAspect {
 }
 ```
 
-（3）在Mapper方法上加入AutoFill注解
+**（3）在Mapper方法上加入AutoFill注解**
 
 ## 7.4 TODO
 
@@ -446,9 +446,9 @@ public class AutoFillAspect {
 
 ​	文件上传需要借助阿里云OSS，实现将文件上传至云端。
 
-（1）创建阿里云账号，申请相应OSS资源，创建bucket
+**（1）创建阿里云账号，申请相应OSS资源，创建bucket**
 
-（2）在yml中配置相关信息
+**（2）在yml中配置相关信息**
 
 ​	*sky-back-end\sky-server\src\main\resources\application.yml*
 
@@ -472,7 +472,7 @@ sky:
     bucket-name: your_bucket-name
 ```
 
-（3）将配置文件（application.yml）中的属性绑定到 Java 对象上
+**（3）将配置文件（application.yml）中的属性绑定到 Java 对象上**
 
 ​	*sky-back-end\sky-common\src\main\java\com\sky\properties\AliOssProperties.java*
 
@@ -488,7 +488,7 @@ public class AliOssProperties {
 }
 ```
 
-（4）将与阿里云OSS建立连接和上传文件的操作封装成工具类
+**（4）将与阿里云OSS建立连接和上传文件的操作封装成工具类**
 
 ​	*sky-back-end\sky-common\src\main\java\com\sky\utils\AliOssUtil.java*
 
@@ -550,7 +550,7 @@ public class AliOssUtil {
 }
 ```
 
-（5）创建配置类，用于创建阿里云文件上传工具类对象
+**（5）创建配置类，用于创建阿里云文件上传工具类对象**
 
 ​	*sky-back-end\sky-server\src\main\java\com\sky\config\OssConfiguration.java*
 
@@ -573,7 +573,7 @@ public class OssConfiguration {
 }
 ```
 
-（6）创建Controller
+**（6）创建Controller**
 
 ​	*sky-back-end\sky-server\src\main\java\com\sky\controller\admin\CommonController.java*
 
@@ -740,3 +740,59 @@ public User wxLogin(UserLoginDTO userLoginDTO) {
 
 # 11.添加“商品浏览”功能（用户端）
 
+# 12.添加“缓存菜品”功能（用户端）
+
+## 12.1 存在问题
+
+​	用户端小程序展示的菜品数据是通过查询数据库获得，如果用户端访问量较大，会导致数据库压力过大，系统响应变慢，用户体验变差。
+
+## 12.2 解决方案
+
+​	通过redis缓存菜品数据，减少数据库查询操作。
+
+​	每个分类的菜品保存一份缓存数据。
+
+​	数据库中菜品数据有变更时清理缓存数据。
+
+## 12.3 实现步骤
+
+**（1）修改用户端的“查询菜品”方法，加入redis缓存的逻辑**
+
+​	*sky-back-end\sky-server\src\main\java\com\sky\controller\uer\DishController.java*
+
+```java
+/**
+ * 根据分类id查询菜品
+ * @param categoryId
+ * @return
+ */
+@GetMapping("/list")
+@ApiOperation("根据分类id查询菜品")
+public Result<List<DishVO>> list(Long categoryId){
+    // 查询redis中是否存在菜品数据
+    String key = "dish_" + categoryId;
+    List<DishVO> list = (List<DishVO>) redisTemplate.opsForValue().get(key);
+
+    // 如果存在直接返回，无需查询数据库
+    if(list != null && !list.isEmpty()) {
+        return Result.success(list);
+    }
+
+    // 如果不存在，将查询到的数据放入redis中并返回
+    Dish dish = new Dish();
+    dish.setCategoryId(categoryId);
+    dish.setStatus(StatusConstant.ENABLE);  // 查询起售中的菜品
+    list = dishService.listWithFlavor(dish);
+    redisTemplate.opsForValue().set(key, list);
+
+    return Result.success(list);
+}
+```
+
+**（2）修改管理端的“新增菜品”、“修改菜品”、“批量删除菜品”、“起售、停售菜品”方法，加入清理缓存的逻辑**
+
+## 12.4 TODO
+
+（1）查询菜品时，将所有的信息都缓存进redis，如果一直不修改就会一直不清理，是否会导致内存问题，能否增加缓存管理的算法或策略
+
+（2）目前管理端的“新增菜品”、“修改菜品”、“批量删除菜品”、“起售、停售菜品”中个别的缓存清理办法为了少查询数据库，选择将相关的数据都清理掉，是否有更好的策略
