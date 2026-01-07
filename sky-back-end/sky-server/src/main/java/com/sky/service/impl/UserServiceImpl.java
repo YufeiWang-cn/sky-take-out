@@ -18,7 +18,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-
 @Service
 @Slf4j
 public class UserServiceImpl implements UserService {
@@ -71,8 +70,8 @@ public class UserServiceImpl implements UserService {
                     .openid(openid)
                     .createTime(LocalDateTime.now())
                     .build();
+            userMapper.insert(user);
         }
-        userMapper.insert(user);
 
         // 返回用户对象
         return user;

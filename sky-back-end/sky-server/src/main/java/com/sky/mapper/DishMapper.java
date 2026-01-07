@@ -7,7 +7,6 @@ import com.sky.entity.Dish;
 import com.sky.enumeration.OperationType;
 import com.sky.vo.DishVO;
 import org.apache.ibatis.annotations.Delete;
-import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
@@ -66,9 +65,9 @@ public interface DishMapper {
     void update(Dish dish);
 
     /**
-     * 根据分类查询
-     * @param categoryId
+     * 动态条件查询菜品
+     * @param dish
      * @return
      */
-    List<DishVO> list(Long categoryId);
+    List<Dish> list(Dish dish);
 }

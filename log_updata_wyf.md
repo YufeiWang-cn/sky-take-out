@@ -172,7 +172,6 @@ employee.setUpdateUser(BaseContext.getCurrentId());
 ​	返回的时间格式错误。
 
 ```json
-……
 "createTime": [
   2025,
   12,
@@ -188,8 +187,7 @@ employee.setUpdateUser(BaseContext.getCurrentId());
   21,
   33,
   43
-],
-……
+]
 ```
 
 ## 3.2 解决方案
@@ -732,10 +730,13 @@ public User wxLogin(UserLoginDTO userLoginDTO) {
                 .openid(openid)
                 .createTime(LocalDateTime.now())
                 .build();
+    	userMapper.insert(user);
     }
-    userMapper.insert(user);
 
     // 返回用户对象
     return user;
 }
 ```
+
+# 11.添加“商品浏览”功能（用户端）
+
