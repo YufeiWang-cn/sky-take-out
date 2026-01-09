@@ -740,7 +740,7 @@ public User wxLogin(UserLoginDTO userLoginDTO) {
 
 # 11.添加“商品浏览”功能（用户端）
 
-# 12.添加“缓存菜品”功能（用户端）
+# 12.添加“缓存菜品”功能
 
 ## 12.1 存在问题
 
@@ -802,3 +802,5 @@ public Result<List<DishVO>> list(Long categoryId){
 # 14.添加“缓存套餐”功能
 
 ​	使用Spring Cache实现，利用注解简化代码。
+
+# 15.添加“购物车”模块（用户端）
