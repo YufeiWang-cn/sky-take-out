@@ -42,11 +42,11 @@ public class EmployeeServiceImpl implements EmployeeService {
         String username = employeeLoginDTO.getUsername();
         String password = employeeLoginDTO.getPassword();
 
-        // 1.根据用户名查询数据库中的数据
+        // 根据用户名查询数据库中的数据
         Employee employee = employeeMapper.getByUsername(username);
 
-        // 2.处理各种异常情况（用户名不存在、密码不对、账号被锁定）
-        //账号不存在
+        // 处理各种异常情况（用户名不存在、密码不对、账号被锁定）
+        // 账号不存在
         if (employee == null) {
             throw new AccountNotFoundException(MessageConstant.ACCOUNT_NOT_FOUND);
         }
@@ -68,7 +68,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new AccountLockedException(MessageConstant.ACCOUNT_LOCKED);
         }
 
-        // 3.返回实体对象
+        // 返回实体对象
         return employee;
     }
 

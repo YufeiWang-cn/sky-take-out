@@ -804,3 +804,6 @@ public Result<List<DishVO>> list(Long categoryId){
 ​	使用Spring Cache实现，利用注解简化代码。
 
 # 15.添加“购物车”模块（用户端）
+
+# 16.添加“地址簿”模块（用户端）
+

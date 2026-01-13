@@ -76,6 +76,8 @@ public interface DishMapper {
      * @param setmealId
      * @return
      */
-    @Select("select a.* from dish a left join setmeal_dish b on a.id = b.dish_id where b.setmeal_id = #{setmealId}")
+    @Select("select a.* " +
+            "from dish a left join setmeal_dish b on a.id = b.dish_id " +
+            "where b.setmeal_id = #{setmealId}")
     List<Dish> getBySetmealId(Long setmealId);
 }
