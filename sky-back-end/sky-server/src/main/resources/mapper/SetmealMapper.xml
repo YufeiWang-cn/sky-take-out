@@ -18,9 +18,8 @@
     </select>
 
     <insert id="insert" parameterType="Setmeal" useGeneratedKeys="true" keyProperty="id">
-        insert into setmeal
-        (category_id, name, price, status, description, image, create_time, update_time, create_user, update_user)
-        value (#{categoryId}, #{name}, #{price}, #{status}, #{description}, #{image}, #{createTime}, #{updateTime}, #{createUser}, #{updateUser})
+        insert into setmeal (category_id, name, price, status, description, image, create_time, update_time, create_user, update_user) value
+        (#{categoryId}, #{name}, #{price}, #{status}, #{description}, #{image}, #{createTime}, #{updateTime}, #{createUser}, #{updateUser})
     </insert>
 
     <select id="pageQuery" resultType="com.sky.vo.SetmealVO">
