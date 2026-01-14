@@ -1,4 +1,4 @@
-package com.sky.controller.uer;
+package com.sky.controller.user;
 
 import com.sky.constant.JwtClaimsConstant;
 import com.sky.dto.UserLoginDTO;

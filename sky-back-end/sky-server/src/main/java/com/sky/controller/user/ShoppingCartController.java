@@ -1,4 +1,4 @@
-package com.sky.controller.uer;
+package com.sky.controller.user;
 
 import com.sky.dto.ShoppingCartDTO;
 import com.sky.entity.ShoppingCart;

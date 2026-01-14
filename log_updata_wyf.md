@@ -808,3 +808,76 @@ public Result<List<DishVO>> list(Long categoryId){
 # 16.添加“地址簿”模块（用户端）
 
 # 17.添加“用户下单”功能（用户端）
+
+# 18.添加并修改“订单支付”功能（用户端）
+
+## 18.1 存在问题
+
+​	微信支付需要有商户资质，所以此部分代码需要修改。
+
+## 18.2 解决方案
+
+​	跳过支付的逻辑，直接跳转到支付成功，并且修改数据库状态。
+
+## 18.3 实现步骤
+
+**（1）修改微信小程序代码，注释掉原来的代码，点击支付按钮后直接跳转支付成功界面**
+
+​	*mp-weixin\pages\pay\index.js*
+
+```js
+// 如果支付成功进入成功页
+clearTimeout(this.times);
+var params = {
+  orderNumber: this.orderDataInfo.orderNumber,
+  payMethod: this.activeRadio === 0 ? 1 : 2 };
+
+(0, _api.paymentOrder)(params).then(function (res) {
+  if (res.code === 1) {
+    // wx.requestPayment({
+    //   nonceStr: res.data.nonceStr,
+    //   package: res.data.packageStr,
+    //   paySign: res.data.paySign,
+    //   timeStamp: res.data.timeStamp,
+    //   signType: res.data.signType,
+    //   success:function(res){
+    //     wx.showModal({
+    //       title: '提示',
+    //       content: '支付成功',
+    //       success:function(){
+    //         uni.redirectTo({url: '/pages/success/index?orderId=' + _this.orderId });
+    //       }
+    //     })
+    //     console.log('支付成功!')
+    //   }
+    // })
+
+    // 直接重定向不使用微信支付
+    uni.redirectTo({url: '/pages/success/index?orderId=' + _this.orderId});
+```
+
+**（2）修改后端代码，直接调用支付成功的代码**
+
+​	*sky-back-end\sky-server\src\main\java\com\sky\controller\user\OrderController.java*
+
+```java
+/**
+ * 订单支付
+ * @param ordersPaymentDTO
+ * @return
+ */
+@PutMapping("/payment")
+@ApiOperation("订单支付")
+public Result<OrderPaymentVO> payment(@RequestBody OrdersPaymentDTO ordersPaymentDTO) throws Exception {
+//        log.info("订单支付：{}", ordersPaymentDTO);
+//        OrderPaymentVO orderPaymentVO = orderService.payment(ordersPaymentDTO);
+//        log.info("生成预支付交易单：{}", orderPaymentVO);
+//        return Result.success(orderPaymentVO);
+    orderService.paySuccess(ordersPaymentDTO.getOrderNumber());
+    return Result.success();
+}
+```
+
+## 18.4 TODO
+
+​	这样处理是否过于暴力？后续可以考虑优化。

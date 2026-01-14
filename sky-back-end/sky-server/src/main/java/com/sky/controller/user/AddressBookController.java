@@ -1,4 +1,4 @@
-package com.sky.controller.uer;
+package com.sky.controller.user;
 
 import com.sky.context.BaseContext;
 import com.sky.entity.AddressBook;
