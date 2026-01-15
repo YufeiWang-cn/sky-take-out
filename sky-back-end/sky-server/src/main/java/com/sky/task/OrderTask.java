@@ -27,7 +27,7 @@ public class OrderTask {
         log.info("定时处理超时订单：{}", LocalDateTime.now());
         List<Orders> ordersList = orderMapper.getByStatusAndOrderTimeLT(Orders.PENDING_PAYMENT, LocalDateTime.now().plusMinutes(-15));
         if(ordersList !=null && ordersList.size() > 0) {
-            for (Orders orders : ordersList) {
+            for(Orders orders : ordersList) {
                 orders.setStatus(Orders.CANCELLED);
                 orders.setCancelReason("订单超时，自动取消");
                 orders.setCancelTime(LocalDateTime.now());
@@ -44,7 +44,7 @@ public class OrderTask {
         log.info("定时处理处于派送中的订单,{}", LocalDateTime.now());
         List<Orders> ordersList = orderMapper.getByStatusAndOrderTimeLT(Orders.DELIVERY_IN_PROGRESS, LocalDateTime.now().plusHours(-1));
         if(ordersList !=null && ordersList.size() > 0) {
-            for (Orders orders : ordersList) {
+            for(Orders orders : ordersList) {
                 orders.setStatus(Orders.COMPLETED);
                 orderMapper.update(orders);
             }

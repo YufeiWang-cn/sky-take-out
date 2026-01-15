@@ -997,3 +997,114 @@ public class OrderTask {
 }
 ```
 
+# 23.实现“来单提醒”和“用户催单“功能
+
+​	HTTP是一种请求-响应协议，服务端无法主动向客户端推送消息。而”来单提醒“和”用户催单“功能需要服务端在事件发生时立即通知客户端，因此可以使用支持服务端主动推送的协议WebSocket（全双工）。
+
+​	*sky-back-end\sky-server\src\main\java\com\sky\websocket\WebSocketServer.java*
+
+```java
+/**
+ * WebSocket服务
+ */
+@Component
+@ServerEndpoint("/ws/{sid}")
+public class WebSocketServer {
+    // 存放会话对象
+    private static Map<String, Session> sessionMap = new HashMap();
+
+    /**
+     * 连接建立成功调用的方法
+     */
+    @OnOpen
+    public void onOpen(Session session, @PathParam("sid") String sid) {
+        System.out.println("客户端：" + sid + "建立连接");
+        sessionMap.put(sid, session);
+    }
+
+    /**
+     * 收到客户端消息后调用的方法
+     * @param message
+     */
+    @OnMessage
+    public void onMessage(String message, @PathParam("sid") String sid) {
+        System.out.println("收到来自客户端：" + sid + "的信息:" + message);
+    }
+
+    /**
+     * 连接关闭调用的方法
+     * @param sid
+     */
+    @OnClose
+    public void onClose(@PathParam("sid") String sid) {
+        System.out.println("连接断开:" + sid);
+        sessionMap.remove(sid);
+    }
+
+    /**
+     * 群发
+     * @param message
+     */
+    public void sendToAllClient(String message) {
+        Collection<Session> sessions = sessionMap.values();
+        for (Session session : sessions) {
+            try {
+                //服务器向客户端发送消息
+                session.getBasicRemote().sendText(message);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
+```
+
+​	*sky-back-end\sky-server\src\main\java\com\sky\config\WebSocketConfiguration.java*
+
+```java
+/**
+ * WebSocket配置类，用于注册WebSocket的Bean
+ */
+@Configuration
+public class WebSocketConfiguration {
+    @Bean
+    public ServerEndpointExporter serverEndpointExporter() {
+        return new ServerEndpointExporter();
+    }
+}
+```
+
+​	*sky-back-end\sky-server\src\main\java\com\sky\service\impl\OrderServiceImpl.java*
+
+```java
+/**
+ * 支付成功，修改订单状态
+ *
+ * @param outTradeNo
+ */
+public void paySuccess(String outTradeNo) {
+
+    // 根据订单号查询订单
+    Orders ordersDB = orderMapper.getByNumber(outTradeNo);
+
+    // 根据订单id更新订单的状态、支付方式、支付状态、结账时间
+    Orders orders = Orders.builder()
+            .id(ordersDB.getId())
+            .status(Orders.TO_BE_CONFIRMED)
+            .payStatus(Orders.PAID)
+            .checkoutTime(LocalDateTime.now())
+            .build();
+
+    orderMapper.update(orders);
+
+    // 通过websocket向客户端服务器推送消息
+    Map map = new HashMap();
+    map.put("type", 1);  // 1表示来单提醒
+    map.put("orderId", ordersDB.getId());
+    map.put("content", "订单号：" + outTradeNo);
+    String json = JSON.toJSONString(map);
+    webSocketServer.sendToAllClient(json);
+}
+```
+
+​	客户催单的逻辑基本相同，此处省略代码。

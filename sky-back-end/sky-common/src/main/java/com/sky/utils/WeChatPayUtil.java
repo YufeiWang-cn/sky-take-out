@@ -170,7 +170,7 @@ public class WeChatPayUtil {
         System.out.println(jsonObject);
 
         String prepayId = jsonObject.getString("prepay_id");
-        if (prepayId != null) {
+        if(prepayId != null) {
             String timeStamp = String.valueOf(System.currentTimeMillis() / 1000);
             String nonceStr = RandomStringUtils.randomNumeric(32);
             ArrayList<Object> list = new ArrayList<>();
@@ -180,7 +180,7 @@ public class WeChatPayUtil {
             list.add("prepay_id=" + prepayId);
             // 二次签名，调起支付需要重新签名
             StringBuilder stringBuilder = new StringBuilder();
-            for (Object o : list) {
+            for(Object o : list) {
                 stringBuilder.append(o).append("\n");
             }
             String signMessage = stringBuilder.toString();

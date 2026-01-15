@@ -68,9 +68,7 @@ public class PayNotifyController {
         StringBuilder result = new StringBuilder();
         String line = null;
         while ((line = reader.readLine()) != null) {
-            if (result.length() > 0) {
-                result.append("\n");
-            }
+            if(result.length() > 0) result.append("\n");
             result.append(line);
         }
         return result.toString();

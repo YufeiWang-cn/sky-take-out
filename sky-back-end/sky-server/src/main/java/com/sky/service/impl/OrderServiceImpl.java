@@ -22,6 +22,7 @@ import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
+import com.sky.websocket.WebSocketServer;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,6 +51,9 @@ public class OrderServiceImpl implements OrderService {
     private UserMapper userMapper;
     @Autowired
     private WeChatPayUtil weChatPayUtil;
+    @Autowired
+    private WebSocketServer webSocketServer;
+
     @Value("${sky.shop.address}")
     private String shopAddress;
     @Value("${sky.baidu.ak}")
@@ -95,7 +99,7 @@ public class OrderServiceImpl implements OrderService {
 
         // 向订单明细表插入n条数据
         List<OrderDetail> orderDetailList = new ArrayList<>();
-        for (ShoppingCart cart : shoppingCartList) {
+        for(ShoppingCart cart : shoppingCartList) {
             OrderDetail orderDetail = new OrderDetail();
             BeanUtils.copyProperties(cart, orderDetail);
             orderDetail.setOrderId(orders.getId());
@@ -134,7 +138,7 @@ public class OrderServiceImpl implements OrderService {
                 user.getOpenid()  // 微信用户的openid
         );
 
-        if (jsonObject.getString("code") != null && jsonObject.getString("code").equals("ORDERPAID")) {
+        if(jsonObject.getString("code") != null && jsonObject.getString("code").equals("ORDERPAID")) {
             throw new OrderBusinessException("该订单已支付");
         }
 
@@ -163,6 +167,14 @@ public class OrderServiceImpl implements OrderService {
                 .build();
 
         orderMapper.update(orders);
+
+        // 通过websocket向客户端服务器推送消息
+        Map map = new HashMap();
+        map.put("type", 1);  // 1表示来单提醒
+        map.put("orderId", ordersDB.getId());
+        map.put("content", "订单号：" + outTradeNo);
+        String json = JSON.toJSONString(map);
+        webSocketServer.sendToAllClient(json);
     }
 
     /**
@@ -186,8 +198,8 @@ public class OrderServiceImpl implements OrderService {
         List<OrderVO> list = new ArrayList();
 
         // 查询出订单明细，并封装入OrderVO进行响应
-        if (page != null && page.getTotal() > 0) {
-            for (Orders orders : page) {
+        if(page != null && page.getTotal() > 0) {
+            for(Orders orders : page) {
                 Long orderId = orders.getId();
 
                 // 查询订单明细
@@ -233,10 +245,10 @@ public class OrderServiceImpl implements OrderService {
         Orders ordersDB = orderMapper.getById(id);
 
         // 校验订单是否存在
-        if (ordersDB == null) throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        if(ordersDB == null) throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
 
         // 订单状态 1待付款 2待接单 3已接单 4派送中 5已完成 6已取消
-        if (ordersDB.getStatus() > 2) throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        if(ordersDB.getStatus() > 2) throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
 
         Orders orders = new Orders();
         orders.setId(ordersDB.getId());
@@ -313,8 +325,8 @@ public class OrderServiceImpl implements OrderService {
         List<OrderVO> orderVOList = new ArrayList<>();
 
         List<Orders> ordersList = page.getResult();
-        if (!CollectionUtils.isEmpty(ordersList)) {
-            for (Orders orders : ordersList) {
+        if(!CollectionUtils.isEmpty(ordersList)) {
+            for(Orders orders : ordersList) {
                 // 将共同字段复制到OrderVO
                 OrderVO orderVO = new OrderVO();
                 BeanUtils.copyProperties(orders, orderVO);
@@ -387,7 +399,7 @@ public class OrderServiceImpl implements OrderService {
         Orders ordersDB = orderMapper.getById(ordersRejectionDTO.getId());
 
         // 订单只有存在且状态为2（待接单）才可以拒单
-        if (ordersDB == null || !ordersDB.getStatus().equals(Orders.TO_BE_CONFIRMED)) throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        if(ordersDB == null || !ordersDB.getStatus().equals(Orders.TO_BE_CONFIRMED)) throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
 
         // 支付状态
 //        Integer payStatus = ordersDB.getPayStatus();
@@ -449,7 +461,7 @@ public class OrderServiceImpl implements OrderService {
         Orders ordersDB = orderMapper.getById(id);
 
         // 校验订单是否存在，并且状态为3
-        if (ordersDB == null || !ordersDB.getStatus().equals(Orders.CONFIRMED)) throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        if(ordersDB == null || !ordersDB.getStatus().equals(Orders.CONFIRMED)) throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
 
         Orders orders = new Orders();
         orders.setId(ordersDB.getId());
@@ -468,7 +480,7 @@ public class OrderServiceImpl implements OrderService {
         Orders ordersDB = orderMapper.getById(id);
 
         // 校验订单是否存在，并且状态为4
-        if (ordersDB == null || !ordersDB.getStatus().equals(Orders.DELIVERY_IN_PROGRESS)) throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        if(ordersDB == null || !ordersDB.getStatus().equals(Orders.DELIVERY_IN_PROGRESS)) throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
 
         Orders orders = new Orders();
         orders.setId(ordersDB.getId());
@@ -532,5 +544,25 @@ public class OrderServiceImpl implements OrderService {
         Integer distance = (Integer) ((JSONObject) jsonArray.get(0)).get("distance");
 
         if(distance > DISTANCE_THRESHOLD) throw new OrderBusinessException("超出配送范围");
+    }
+
+    /**
+     * 客户催单
+     * @param id
+     */
+    public void reminder(Long id) {
+        // 根据id查询订单
+        Orders ordersDB = orderMapper.getById(id);
+
+        // 校验订单是否存在
+        if(ordersDB == null) throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+
+        // 通过websocket向客户端服务器推送消息
+        Map map = new HashMap();
+        map.put("type", 2);  // 2表示客户催单
+        map.put("orderId", ordersDB.getId());
+        map.put("content", "订单号：" + ordersDB.getNumber());
+        String json = JSON.toJSONString(map);
+        webSocketServer.sendToAllClient(json);
     }
 }

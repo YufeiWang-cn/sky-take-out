@@ -102,7 +102,7 @@ public class AddressBookController {
         addressBook.setUserId(BaseContext.getCurrentId());
         List<AddressBook> list = addressBookService.list(addressBook);
 
-        if (list != null && list.size() == 1) return Result.success(list.get(0));
+        if(list != null && list.size() == 1) return Result.success(list.get(0));
 
         return Result.error("没有查询到默认地址");
     }

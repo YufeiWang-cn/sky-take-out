@@ -47,26 +47,20 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         // 处理各种异常情况（用户名不存在、密码不对、账号被锁定）
         // 账号不存在
-        if (employee == null) {
-            throw new AccountNotFoundException(MessageConstant.ACCOUNT_NOT_FOUND);
-        }
+        if(employee == null) throw new AccountNotFoundException(MessageConstant.ACCOUNT_NOT_FOUND);
 
         // 密码比对
         // 使用Argon2算法加密
         Argon2PasswordEncoder arg2SpringSecurity = new Argon2PasswordEncoder(16, 32, 1, 60000, 10);
         // 密码错误
-        if (!arg2SpringSecurity.matches(password, employee.getPassword())) {
-            throw new PasswordErrorException(MessageConstant.PASSWORD_ERROR);
-        }
+        if(!arg2SpringSecurity.matches(password, employee.getPassword())) throw new PasswordErrorException(MessageConstant.PASSWORD_ERROR);
 //        if (!password.equals(employee.getPassword())) {
 //            //密码错误
 //            throw new PasswordErrorException(MessageConstant.PASSWORD_ERROR);
 //        }
 
         // 账号被锁定
-        if (employee.getStatus() == StatusConstant.DISABLE) {
-            throw new AccountLockedException(MessageConstant.ACCOUNT_LOCKED);
-        }
+        if(employee.getStatus() == StatusConstant.DISABLE) throw new AccountLockedException(MessageConstant.ACCOUNT_LOCKED);
 
         // 返回实体对象
         return employee;

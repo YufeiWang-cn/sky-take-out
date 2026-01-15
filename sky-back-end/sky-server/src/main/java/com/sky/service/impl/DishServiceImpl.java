@@ -191,7 +191,7 @@ public class DishServiceImpl implements DishService {
 
         List<DishVO> dishVOList = new ArrayList<>();
 
-        for (Dish d : dishList) {
+        for(Dish d : dishList) {
             DishVO dishVO = new DishVO();
             BeanUtils.copyProperties(d,dishVO);
 

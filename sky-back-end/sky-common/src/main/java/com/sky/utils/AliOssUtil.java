@@ -45,9 +45,7 @@ public class AliOssUtil {
                     + "such as not being able to access the network.");
             System.out.println("Error Message:" + ce.getMessage());
         } finally {
-            if (ossClient != null) {
-                ossClient.shutdown();
-            }
+            if(ossClient != null) ossClient.shutdown();
         }
 
         // 文件访问路径规则 https://BucketName.Endpoint/ObjectName

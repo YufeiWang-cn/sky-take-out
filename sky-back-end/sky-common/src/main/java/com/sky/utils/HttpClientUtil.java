@@ -42,7 +42,7 @@ public class HttpClientUtil {
         try{
             URIBuilder builder = new URIBuilder(url);
             if(paramMap != null){
-                for (String key : paramMap.keySet()) {
+                for(String key : paramMap.keySet()) {
                     builder.addParameter(key, paramMap.get(key));
                 }
             }
@@ -90,9 +90,9 @@ public class HttpClientUtil {
             HttpPost httpPost = new HttpPost(url);
 
             // 创建参数列表
-            if (paramMap != null) {
+            if(paramMap != null) {
                 List<NameValuePair> paramList = new ArrayList();
-                for (Map.Entry<String, String> param : paramMap.entrySet()) {
+                for(Map.Entry<String, String> param : paramMap.entrySet()) {
                     paramList.add(new BasicNameValuePair(param.getKey(), param.getValue()));
                 }
                 // 模拟表单
@@ -136,10 +136,10 @@ public class HttpClientUtil {
             // 创建Http Post请求
             HttpPost httpPost = new HttpPost(url);
 
-            if (paramMap != null) {
+            if(paramMap != null) {
                 // 构造json格式数据
                 JSONObject jsonObject = new JSONObject();
-                for (Map.Entry<String, String> param : paramMap.entrySet()) {
+                for(Map.Entry<String, String> param : paramMap.entrySet()) {
                     jsonObject.put(param.getKey(),param.getValue());
                 }
                 StringEntity entity = new StringEntity(jsonObject.toString(),"utf-8");
