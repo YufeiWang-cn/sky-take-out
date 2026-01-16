@@ -1112,3 +1112,5 @@ public void paySuccess(String outTradeNo) {
 # 24.添加“营业额统计”功能（管理端）
 
 # 25.添加“用户统计”功能（管理端）
+
+# 26.添加“订单统计”功能（管理端）
