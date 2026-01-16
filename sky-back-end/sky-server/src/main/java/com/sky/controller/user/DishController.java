@@ -32,7 +32,7 @@ public class DishController {
      */
     @GetMapping("/list")
     @ApiOperation("根据分类id查询菜品")
-    public Result<List<DishVO>> list(Long categoryId){
+    public Result<List<DishVO>> list(Long categoryId) {
         // 查询redis中是否存在菜品数据
         String key = "dish_" + categoryId;
         List<DishVO> list = (List<DishVO>) redisTemplate.opsForValue().get(key);

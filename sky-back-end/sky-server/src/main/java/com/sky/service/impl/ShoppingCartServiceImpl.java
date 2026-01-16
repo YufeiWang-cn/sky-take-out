@@ -108,11 +108,11 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
 
         List<ShoppingCart> list = shoppingCartMapper.list(shoppingCart);
 
-        if(list != null && list.size() > 0){
+        if(list != null && list.size() > 0) {
             shoppingCart = list.get(0);
 
             Integer number = shoppingCart.getNumber();
-            if(number == 1){
+            if(number == 1) {
                 // 当前商品在购物车中的份数为1，直接删除当前记录
                 shoppingCartMapper.deleteById(shoppingCart.getId());
             }

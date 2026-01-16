@@ -32,7 +32,7 @@ public class HttpClientUtil {
      * @param paramMap
      * @return
      */
-    public static String doGet(String url, Map<String,String> paramMap){
+    public static String doGet(String url, Map<String,String> paramMap) {
         // 创建Httpclient对象
         CloseableHttpClient httpClient = HttpClients.createDefault();
 
@@ -41,7 +41,7 @@ public class HttpClientUtil {
 
         try{
             URIBuilder builder = new URIBuilder(url);
-            if(paramMap != null){
+            if(paramMap != null) {
                 for(String key : paramMap.keySet()) {
                     builder.addParameter(key, paramMap.get(key));
                 }
@@ -55,16 +55,16 @@ public class HttpClientUtil {
             response = httpClient.execute(httpGet);
 
             // 判断响应状态
-            if(response.getStatusLine().getStatusCode() == 200){
+            if(response.getStatusLine().getStatusCode() == 200) {
                 result = EntityUtils.toString(response.getEntity(),"UTF-8");
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
-        }finally {
+        } finally {
             try {
                 response.close();
                 httpClient.close();
-            } catch (IOException e) {
+            } catch(IOException e) {
                 e.printStackTrace();
             }
         }

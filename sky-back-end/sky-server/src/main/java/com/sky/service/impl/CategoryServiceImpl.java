@@ -78,14 +78,14 @@ public class CategoryServiceImpl implements CategoryService {
     public void deleteById(Long id) {
         // 查询当前菜品分类是否关联了菜品，如果关联了就抛出业务异常
         Integer count = dishMapper.countByCategoryId(id);
-        if(count > 0){
+        if(count > 0) {
             // 当前茶品分类下有菜品，不能删除
             throw new DeletionNotAllowedException(MessageConstant.CATEGORY_BE_RELATED_BY_DISH);
         }
 
         // 查询当前套餐分类是否关联了套餐，如果关联了就抛出业务异常
         count = setmealMapper.countByCategoryId(id);
-        if(count > 0){
+        if(count > 0) {
             // 当前套餐分类下有套餐，不能删除
             throw new DeletionNotAllowedException(MessageConstant.CATEGORY_BE_RELATED_BY_SETMEAL);
         }
