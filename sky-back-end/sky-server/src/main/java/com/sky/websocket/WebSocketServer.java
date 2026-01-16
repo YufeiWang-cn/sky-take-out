@@ -56,7 +56,7 @@ public class WebSocketServer {
         Collection<Session> sessions = sessionMap.values();
         for(Session session : sessions) {
             try {
-                //服务器向客户端发送消息
+                // 服务器向客户端发送消息
                 session.getBasicRemote().sendText(message);
             } catch (Exception e) {
                 e.printStackTrace();

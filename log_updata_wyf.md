@@ -1108,3 +1108,6 @@ public void paySuccess(String outTradeNo) {
 ```
 
 ​	客户催单的逻辑基本相同，此处省略代码。
+
+# 24.添加“营业额统计”功能（管理端）
+
