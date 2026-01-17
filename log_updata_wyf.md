@@ -1118,3 +1118,7 @@ public void paySuccess(String outTradeNo) {
 # 27.添加“销量排名统计”功能（管理端）
 
 # 28.添加“工作台”模块（管理端）
+
+# 29.添加“导出运营数据”功能（管理端）
+
+​	利用Apache POI完成读取excel模板，写入运营数据，再通过浏览器下载导出。

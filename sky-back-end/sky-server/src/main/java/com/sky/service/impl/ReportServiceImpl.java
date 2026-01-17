@@ -5,14 +5,19 @@ import com.sky.entity.Orders;
 import com.sky.mapper.OrderMapper;
 import com.sky.mapper.UserMapper;
 import com.sky.service.ReportService;
-import com.sky.vo.OrderReportVO;
-import com.sky.vo.SalesTop10ReportVO;
-import com.sky.vo.TurnoverReportVO;
-import com.sky.vo.UserReportVO;
+import com.sky.service.WorkspaceService;
+import com.sky.vo.*;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -28,6 +33,8 @@ public class ReportServiceImpl implements ReportService {
     private OrderMapper orderMapper;
     @Autowired
     private UserMapper userMapper;
+    @Autowired
+    private WorkspaceService workspaceService;
 
     /**
      * 统计指定时间区间内的营业额数据
@@ -189,5 +196,65 @@ public class ReportServiceImpl implements ReportService {
                 .numberList(StringUtils.join(numberList, ","))
                 .build();
         return salesTop10ReportVO;
+    }
+
+    /**
+     * 导出运营数据报表
+     * @param response
+     */
+    @Override
+    public void exportBusinessData(HttpServletResponse response) {
+        // 查询数据库，获取营业数据——查询最近30天的运营数据，不包含今天
+        LocalDate dateBegin = LocalDate.now().plusDays(-30);
+        LocalDate dateEnd = LocalDate.now().plusDays(-1);
+        // 查询概览数据
+        BusinessDataVO businessDataVO = workspaceService.getBusinessData(LocalDateTime.of(dateBegin, LocalTime.MIN), LocalDateTime.of(dateEnd, LocalTime.MAX));
+
+        // 通过POI将数据写入到excel文件中
+        // 加载模板
+        InputStream in = this.getClass().getClassLoader().getResourceAsStream("template/运营数据报表模板.xlsx");
+        // 基于模板文件创建一个新的excel文件
+        try {
+            assert in != null;
+            XSSFWorkbook excel = new XSSFWorkbook(in);
+            // 获取表格文件的Sheet页
+            XSSFSheet sheet = excel.getSheet("Sheet1");
+
+            // 填充数据——时间
+            sheet.getRow(1).getCell(1).setCellValue("时间：" + dateBegin + "至" + dateEnd);
+            // 填充数据——营业额
+            sheet.getRow(3).getCell(2).setCellValue(businessDataVO.getTurnover());
+            // 填充数据————订单完成率
+            sheet.getRow(3).getCell(4).setCellValue(businessDataVO.getOrderCompletionRate());
+            // 填充数据——新增用户数
+            sheet.getRow(3).getCell(6).setCellValue(businessDataVO.getNewUsers());
+            // 填充数据——有效订单
+            sheet.getRow(4).getCell(2).setCellValue(businessDataVO.getValidOrderCount());
+            // 填充数据——平均客单价
+            sheet.getRow(4).getCell(4).setCellValue(businessDataVO.getUnitPrice());
+
+            // 填充明细数据
+            LocalDate date;
+            for(int i = 0; i < 30; i++) {
+                date = dateBegin.plusDays(i);
+                BusinessDataVO businessData = workspaceService.getBusinessData(LocalDateTime.of(date, LocalTime.MIN), LocalDateTime.of(date, LocalTime.MAX));
+                sheet.getRow(7 + i).getCell(1).setCellValue(date.toString());
+                sheet.getRow(7 + i).getCell(2).setCellValue(businessData.getTurnover());
+                sheet.getRow(7 + i).getCell(3).setCellValue(businessData.getValidOrderCount());
+                sheet.getRow(7 + i).getCell(4).setCellValue(businessData.getOrderCompletionRate());
+                sheet.getRow(7 + i).getCell(5).setCellValue(businessData.getUnitPrice());
+                sheet.getRow(7 + i).getCell(6).setCellValue(businessData.getNewUsers());
+            }
+
+            // 通过输出流将excel文件下载到客户端浏览器
+            ServletOutputStream out = response.getOutputStream();
+            excel.write(out);
+
+            // 关闭资源
+            out.close();
+            excel.close();
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
     }
 }

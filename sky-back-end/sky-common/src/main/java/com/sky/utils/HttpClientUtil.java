@@ -58,7 +58,7 @@ public class HttpClientUtil {
             if(response.getStatusLine().getStatusCode() == 200) {
                 result = EntityUtils.toString(response.getEntity(),"UTF-8");
             }
-        } catch (Exception e) {
+        } catch(Exception e) {
             e.printStackTrace();
         } finally {
             try {
@@ -106,12 +106,12 @@ public class HttpClientUtil {
             response = httpClient.execute(httpPost);
 
             resultString = EntityUtils.toString(response.getEntity(), "UTF-8");
-        } catch (Exception e) {
+        } catch(Exception e) {
             throw e;
         } finally {
             try {
                 response.close();
-            } catch (IOException e) {
+            } catch(IOException e) {
                 e.printStackTrace();
             }
         }
@@ -156,12 +156,12 @@ public class HttpClientUtil {
             response = httpClient.execute(httpPost);
 
             resultString = EntityUtils.toString(response.getEntity(), "UTF-8");
-        } catch (Exception e) {
+        } catch(Exception e) {
             throw e;
         } finally {
             try {
                 response.close();
-            } catch (IOException e) {
+            } catch(IOException e) {
                 e.printStackTrace();
             }
         }
